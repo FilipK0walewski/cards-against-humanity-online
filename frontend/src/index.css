@@ -1,0 +1,79 @@
+:root {
+  font-family: Menlo, Consolas, Monaco, Liberation Mono, Lucida Console, monospace;
+  --red-0: #e11d48;
+  --green-0: #16a34a;
+
+  --bg-0: #1e3a8a;
+  --bg-1: #172554;
+  --bg-2: #2563eb;
+  --bg-3: #52525b;
+
+  --font-0: #eff6ff;
+  --font-1: white;
+
+  --black-card-bg: black;
+  --white-card-bg: white;
+  --black-card-font: white;
+  --white-card-font: black;
+
+  --header-height: 80px;
+}
+
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden;
+  color: var(--font-0);
+}
+
+ul {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style-type: none;
+  list-style-position: outside;
+}
+
+h1 {
+  font-size: 3rem;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--font-1);
+}
+
+button {
+  font-family: Menlo, Consolas, Monaco, Liberation Mono, Lucida Console, monospace;
+}
+
+.card {
+  display: flex;
+  width: 12rem;
+  aspect-ratio: 3/4;
+  padding: .5rem;
+  box-sizing: border-box;
+  background-color: var(--bg-1);
+}
+
+.white {
+  background-color: var(--white-card-bg);
+  color: var(--white-card-font);
+}
+
+.m-1 {
+  margin: .5rem;
+}
+
+.bg-img {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.space-x > *+* {
+  margin-left: .5rem;
+}

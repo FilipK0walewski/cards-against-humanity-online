@@ -1,0 +1,15 @@
+.container {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.container > *+* {
+    margin-top: 1rem;
+}
+
+.container form > *+* {
+    margin-top: 1rem;
+}

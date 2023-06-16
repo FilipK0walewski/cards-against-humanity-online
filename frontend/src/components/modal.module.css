@@ -1,0 +1,23 @@
+.btnContainer {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: .5rem;
+}
+
+.dialogForm {
+    width: 500px;
+}
+
+.dialogForm>*+* {
+    margin-top: .5rem;
+}
+
+.dialog {
+    background-color: var(--bg-0);
+    color: var(--font-0);
+}
+
+dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.75);
+}

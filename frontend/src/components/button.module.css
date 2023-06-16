@@ -1,0 +1,13 @@
+.btn {
+    height: 2rem;
+    background-color: var(--bg-2);
+    color: var(--font-1);
+    outline: none;
+    border: none;
+    cursor: pointer;
+}
+
+.btn:disabled {
+    cursor: default;
+    background-color: var(--bg-3);
+}

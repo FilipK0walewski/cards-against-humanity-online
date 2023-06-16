@@ -1,0 +1,36 @@
+:root {
+    --width: 20rem;
+}
+
+.mainContainer {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--bg-0);
+}
+
+.mainContainer > *+* {
+    margin-top: .5rem;
+}
+
+.form {
+    width: var(--width);
+    display: flex;
+    flex-direction: column;
+}
+
+.form > *+* {
+    margin-top: .5rem;
+}
+
+.nav {
+    width: var(--width);
+}
+
+.ul {
+    display: flex;
+    justify-content: space-between;
+}

@@ -1,0 +1,70 @@
+.container {
+    margin: 2rem;
+    padding: .5rem;
+    box-sizing: border-box;
+    /* background-color: var(--bg-1); */
+    position: relative;
+    height: calc(100% - 80px);
+}
+
+.gameName {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--font-1);
+}
+
+.imageContainer {
+    max-width: 50px;
+    max-height: 50px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    position: relative;
+}
+
+.image {
+    width: 100%;
+    height: auto;
+    border-radius: 50%;
+}
+
+.usersList {
+    position: absolute;
+    right: 0;
+    top: .5rem;
+}
+
+.usersList > *+* {
+    margin-top: .5rem;
+}
+
+.userContainer {
+    display: flex;
+    width: 200px;
+}
+
+.userContainer > *+* {
+    margin-left: .5rem;
+}
+
+.userText {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.score {
+    font-size: small;
+}
+
+.offline {
+    opacity: 50%;
+}
+
+
+.gameInfo > *+* {
+    margin-top: .5rem;
+}

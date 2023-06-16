@@ -1,0 +1,92 @@
+.container {
+    max-width: 1076px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 1rem;
+}
+
+.container>*+* {
+    margin-top: 1rem;
+}
+
+.deckName {
+    padding: .5rem 0;
+}
+
+.paginationContainer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.paginationContainer>*+* {
+    margin-left: .5rem;
+}
+
+.paginationInputForm {
+    width: 50px;
+}
+
+
+.cardsList {
+    display: flex;
+    flex-wrap: wrap;
+    width: auto;
+    justify-content: center;
+}
+
+.textBtn {
+    border: none;
+    outline: none;
+    text-decoration: underline;
+    background-color: inherit;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.textBtn:hover {
+    color: var(--bg-2);
+}
+
+.buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.buttons>*+* {
+    margin-top: 1rem;
+}
+
+.formContainer {
+    width: 500px;
+}
+
+.formContainer>*+* {
+    margin-top: 1rem;
+}
+
+.removeCard {
+    position: absolute;
+    bottom: 1rem;
+}
+
+.flexEnd {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (min-width: 768px) {
+    .buttons {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .buttons>*+* {
+        margin-top: 0rem;
+        margin-left: 1rem;
+    }
+
+}

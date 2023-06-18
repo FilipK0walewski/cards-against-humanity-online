@@ -25,9 +25,24 @@ class Room {
         this.cardChar = null
         this.cardCharN = 0
 
-        this.status = 'Waiting for game start.'
         this.started = false
+        this.reading = false
+        this.cardsToRead = null
+
+        this.status = 'Waiting for game start.'
         this.logs = []
+    }
+
+    getNewCardChar() {
+        let newCardChar = null
+        for (let i = 0; i < Object.keys(this.users).length; i++) {
+            if (i < this.cardCharN) continue
+            const uId = Object.keys(this.users)[i]
+            if (this.users[uId].online !== true) continue
+            newCardChar = uId
+            break
+        }
+        return newCardChar
     }
 }
 
@@ -82,6 +97,9 @@ io.use(async (socket, next) => {
             sound: decoded.sound,
             online: true,
             score: 0,
+
+            ready: false,
+            selected: null,
             cards: []
         }
         room.users[decoded.user] = userData
@@ -114,7 +132,12 @@ io.on('connection', (socket) => {
         const room = rooms[roomId]
 
         if (room.owner !== socket.userData.id) {
-            io.to(roomId).emit('message', `${socket.id} is impatient.`)
+            socket.emit('message', `You can't start game, only owner can do it.`)
+            return
+        }
+
+        if (room.started === true) {
+            socket.emit('message', `Game already started.`)
             return
         }
 
@@ -130,31 +153,134 @@ io.on('connection', (socket) => {
 
         room.black = await db.getBlackCard(room.deckId)
         for (let u in room.users) {
-            // !!!change, send it only to owner of cards
             const whiteCards = await db.getWhiteCards(room.deckId, 10)
             room.users[u].cards = whiteCards
-            socket.userData.cards = whiteCards
-            io.to(room.users[u].socketId).emit('userData', whiteCards)
+            io.to(room.users[u].socketId).emit('userData', room.users[u])
         }
 
         io.to(roomId).emit('data', room)
-
-        // io.to(roomId).emit('message', { message: `Game started, ${room.reader} is reading now.` })
     })
 
-    socket.on('chosenCards', (roomId, cards) => {
+    socket.on('whites', (selected) => {
+        const roomId = socket.handshake.query.id
         const room = rooms[roomId]
-        room.setUserChosenCards(socket.id, cards)
-        const [usersCards, roundEnd] = room.getUsersCards()
-        if (roundEnd === false) {
-            io.to(roomId).emit('users', room.getUsers())
+
+        if (room.black.fields !== selected.length) {
+            socket.emit('message', 'Invalid number of selected cards.')
             return
         }
-        const data = room.getData()
-        data['usersCards'] = usersCards
-        io.to(roomId).emit('data', data)
-        if (room.isReaderOnline() === true) return
-        io.to(roomId).emit('message', { message: `${room.reader} is offline, everyone can choose a winner now.` })
+
+        const userId = socket.userData.id
+        if (room.users[userId].ready === true) {
+            socket.emit('message', 'You selected your cards already.')
+            return
+        }
+
+        const selectedCardsData = room.users[userId].cards.filter(i => selected.includes(i.id))
+
+        room.users[userId].ready = true
+        room.users[userId].selected = selectedCardsData
+        socket.userData = room.users[userId]
+        socket.emit('userData', room.users[userId])
+
+        const readyUsers = Object.keys(room.users).filter(i => room.users[i].ready === true)
+        if (readyUsers.length !== Object.keys(room.users).length - 1) {
+            console.log('not all users are ready')
+            io.to(roomId).emit('data', room)
+            return
+        }
+        
+        const allSelectedCards = []
+        for (let uId in room.users) {
+            if (uId == room.cardChar) continue
+            allSelectedCards.push(room.users[uId].selected)
+        }
+
+        console.log('all selected cards', allSelectedCards)
+
+        room.reading = true
+        room.status = 'Reading time.'
+        room.cardsToRead = allSelectedCards
+
+        io.to(roomId).emit('data', room)
+    })
+
+    socket.on('best', async (selected) => {
+        console.log(selected)
+
+        const roomId = socket.handshake.query.id
+        const room = rooms[roomId]
+
+        const winners = []
+        for (let uId in room.users) {
+            if (room.cardChar == uId) continue
+            if (selected.length !== room.users[uId].selected.length) continue
+            let equal = true
+            for (let i = 0; i < selected.length; i++) {
+                if (selected[i].id !== room.users[uId].selected[i].id) {
+                    equal = false
+                    break
+                }
+            }
+
+            if (equal === true) {
+                winners.push(uId)
+            }
+            
+        }
+
+        const winScore = Math.floor(1 / winners.length * 100) / 100
+        for (let uId in room.users) {
+
+            if (room.users[uId].selected !== null) {
+                const newWhites = await db.getWhiteCards(room.deckId, room.black.fields)
+                console.log(newWhites)
+                const userCards = [...room.users[uId].cards, ...newWhites]
+                room.users[uId].cards = userCards
+            }
+
+            room.users[uId].ready = false
+            room.users[uId].selected = null
+
+            if (winners.includes(uId)) {
+                room.users[uId].score += winScore
+            }
+
+            io.to(room.users[uId].socketId).emit('userData', room.users[uId])
+        }
+
+        room.black = await db.getBlackCard(room.deckId)
+        room.reading = false
+        room.round += 1
+
+        room.cardCharN += 1
+        let newCardChar = room.getNewCardChar()
+        if (newCardChar === null) {
+            room.cardCharN = 0
+            newCardChar = room.getNewCardChar()
+        }
+        room.cardChar = newCardChar
+
+        io.to(roomId).emit('data', room)
+    })
+
+    socket.on('kick', (userId) => {
+        const roomId = socket.handshake.query.id
+        const room = rooms[roomId]
+
+        if (room.owner != socket.userData.id) {
+            socket.emit('message', 'You cant\'t kick user, you are not owner of this game.')
+            return
+        }
+
+        if (!Object.keys(room.users).includes(userId)) {
+            socket.emit('message', `User with id ${userId} does not exists.`)
+        }
+
+        io.to(userId).emit('kick')
+        delete room.users[userId]
+        socket.emit('message', `User with id ${userId} kicked out.`)
+        io.to(roomId).emit('data', room)
     })
 
     socket.on('roundEnd', async (roomId, winnerName) => {
@@ -170,8 +296,6 @@ io.on('connection', (socket) => {
             io.to(socket.id).emit('message', { message: `You are not reading now.` })
             return
         }
-
-
 
         room.endRound(winnerName)
         const winnerOfTheGame = room.isGameEnded()
@@ -207,7 +331,12 @@ io.on('connection', (socket) => {
         socket.leave(roomId)
         const room = rooms[roomId]
         if (room && socket.userData) {
-            room.users[socket.userData.id].online = false
+            try {
+                room.users[socket.userData.id].online = false
+            } catch {
+                io.to(roomId).emit('message', 'Error while disconnecting.')
+                console.log(socket.userData)
+            }
         }
         io.to(roomId).emit('data', room)
     })

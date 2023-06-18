@@ -62,9 +62,31 @@
 
 .offline {
     opacity: 50%;
+    background-color: red;
 }
 
+/* .gameInfo {
+    background-color: rebeccapurple;
+} */
 
 .gameInfo > *+* {
     margin-top: .5rem;
+}
+
+.cardsContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.userSelectedCards {
+    display: flex;
+    padding: .5rem;
+    box-sizing: border-box;
+    background-color: rebeccapurple;
+    width: min-content;
+}
+
+.you {
+    color: var(--green-0);
 }

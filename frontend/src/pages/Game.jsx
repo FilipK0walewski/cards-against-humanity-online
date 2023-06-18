@@ -6,10 +6,8 @@ import { io } from "socket.io-client"
 import { useDispatch } from "react-redux"
 import { addNotification } from "../store/common"
 
-import styles from './game.module.css'
-
 import { Button } from '../components/Button'
-import { Input } from '../components/Input'
+import styles from './game.module.css'
 
 let socket
 export const Game = () => {
@@ -21,12 +19,45 @@ export const Game = () => {
     const [userData, setUserData] = useState()
     const [socketId, setSocketId] = useState(null)
 
+    const [whites, setWhites] = useState([])
+    const [best, setBest] = useState(null)
+
     const startGame = () => {
         socket.emit('start')
     }
 
+    const sendWhites = () => {
+        socket.emit('whites', whites)
+    }
+
+    const sendBest = () => {
+        socket.emit('best', data.cardsToRead[best])
+    }
+
+    const kick = (userId) => {
+        if (window.confirm(`Kick player ${data.users[userId].name}?`)) {
+            socket.emit('kick', userId)
+        }
+    }
+
+    const selectWhite = (e) => {
+        setWhites(arr => {
+            const tmp = [...arr, e.target.value]
+            console.log(tmp.length, data.black.fields)
+            if (tmp.length > data.black.fields) tmp.shift()
+            console.log(tmp.length, data.black.fields)
+            return tmp
+        })
+    }
+
+    const selectBest = (e) => {
+        if (data.cardChar !== userData.id) return
+        setBest(e.target.value)
+    }
+
     useEffect(() => {
         const token = localStorage.getItem(id)
+
         if (!token) {
             localStorage.removeItem(id)
             navigate(`/lobby/${id}`)
@@ -78,17 +109,17 @@ export const Game = () => {
     }, []);
 
     return (
-        <> {data ? <>
-            <div className={styles.container}>
+        <> {data && userData ? <>
+            <div className={`space-y ${styles.container}`}>
                 <div className={styles.gameInfo}>
                     <p className={styles.gameName}>{data.name}</p>
                     <p>{data.status}</p>
                     <div className="space-x">
                         <Button text="copy invite url" />
-                        {userData.id === data.owner ? <Button text="start game" onClick={startGame} /> : null}
-                        <Button text="start game" onClick={startGame} />
+                        {data.started !== true && userData.id === data.owner ? <Button text="start game" onClick={startGame} /> : null}
                     </div>
                 </div>
+
 
                 <ul className={styles.usersList}>
                     {Object.keys(data.users).map(u => (
@@ -97,148 +128,59 @@ export const Game = () => {
                                 <img className={styles.image} src={data.users[u].img} alt={data.users[u].name} />
                             </div>
                             <div className={styles.userText}>
-                                <p>{data.users[u].name}</p>
+                                <p className={u == userData.id ? styles.you : null}>{data.users[u].name}</p>
+                                <p className={styles.score}>{u == data.cardChar ? 'char' : data.users[u].ready === false ? 'thinking' : null}</p>
                                 <p className={styles.score}>score: {data.users[u].score}</p>
                             </div>
+                            {userData.id == data.owner ? <button onClick={() => kick(u)}>kick</button> : null}
                         </li>
                     ))}
                 </ul>
 
-                {!data.started ? null : <>
-                    <p>game started</p>
-                    <p>{data.users[data.cardChar].name} is card char.</p>
+                {!data.started ? null : <div className={`space-y ${styles.cardsContainer}`}>
                     <div className="card black">
                         {data.black.text}
                     </div>
-                    {data.cardChar === userData.id ? null : <>
-                        <p>your white cards here</p>
-                        {!userData.cards ? null :
-                            <ul>
-                                {userData.cards.map(card => (
-                                    <li className="card white">{card.text}</li>
-                                ))}
-                            </ul>
-                        }
-                    </>}
-                </>}
-            </div>
-            {/* <div>
-                    <div className="w-full h-1/2 border border-slate-400 rounded p-2 overflow-y-auto relative">
-                        <ul className="flex flex-wrap">
-                            {data.black ? <li className="card black m-1 !cursor-default select-none">{data.black.text}</li> : null}
-                            {data.usersCards && data.readingTime === true ?
-                                <>
-                                    {
-                                        Object.keys(data.usersCards).map((u, i) => (
-                                            <>
-                                                {data.usersCards[u].map((c, j) => (
-                                                    <li key={`cd-${i}-${j}`} value={i} onClick={handleWinningCards} className={
-                                                        `m-1 select-none card white ${u === winningCards ? 'border-emerald-300 border-2' : ''} ${u === socketId ? '!bg-emerald-100' : ''} ${socketId === data.reader || !(data.reader in users) ? '' : '!cursor-default'} ${i % 2 !== 0 ? 'bg-slate-500' : ''}`}
-                                                    >{c.text}</li>
-                                                ))}
-                                            </>
-                                        ))
-                                    }
-                                </>
-                                :
-                                <>
-                                    {chosenWhites.map((c, i) => (
-                                        <li onClick={whiteChosenClick} className="select-none card white m-1" key={`white-${i}`} value={i}>{c.text}</li>
-                                    ))}
-                                    {Object.keys(users).map((userId, i) => (
-                                        <>
-                                            {userId === socketId || users[userId].ready === false ? null : [...Array(data.black.fields ? data.black.fields : 1)].map(() => (
-                                                <li key={`uk-${userId}-${i}`} className="card white m-1 !cursor-default"></li>
-                                            ))}
-                                        </>
-                                    ))}
-                                </>
-                            }
-                        </ul>
-                        {(socketId === data.reader || !(data.reader in users)) && data.readingTime === true ? <button disabled={!winningCards} onClick={endRound} className="btn-primary btn-primary absolute m-1 right-0 bottom-0">confirm</button> : null}
-                        {data.black === null || users[socketId].ready === true || chosenWhites.length !== data.black.fields ? null : <button onClick={sendChosen} className="btn-primary btn-primary absolute m-1 right-0 bottom-0">confirm cards</button>}
-                    </div>
-                    <div className="w-full h-1/2 flex relative">
-                        <div className="w-full h-full border border-slate-400 rounded p-2 overflow-y-auto">
-                            {!whites || whites.length === 0 ? <p>no cards</p> :
-                                <ul className="flex flex-wrap">
-                                    {whites.map((c, i) => (
-                                        <li key={i} value={i} className="white card m-1 select-none" onClick={whiteClick}>
-                                            {c.text}
-                                        </li>
-                                    ))}
-                                </ul>
-                            }
-                        </div>
-                        {data.reader === socketId || (users[socketId].ready === true || data.readingTime === true) ?
-                            <>
-                                <div className='absolute w-full h-full bg-slate-500 opacity-25 rounded'></div>
-                                {data.reader === socketId ?
-                                    <p className='absolute top-1/2 left-1/2 bold text-xl -translate-x-1/2 -translate-y-1/2 text-center bg-slate-500 p-2 rounded-sm select-none z-2000'>
-                                        Now is your turn to read, wait for other player to choose their cards.
-                                    </p>
-                                    : null}
-                            </>
-                            : null}
-                    </div>
-                </div>
-                <div className="md:w-96 h-min md:h-full bg-slate-400 rounded overflow-y-auto border border-slate-400">
-                    <div className="p-2 w-full flex justify-between">
-                        <p className="text-lg font-bold">{data.gameName}</p>
-                        {!data.currentRound ? null : <p className="text-lg font-bold">round {data.currentRound}</p>}
-                    </div>
-                    {users ?
-                        <ul className="space-y-2">
-                            {Object.keys(users).map((u) => (
-                                <li className="bg-slate-200 m-1 p-2 rounded-sm flex items-center space-x-3 select-none overflow-y-auto" key={u}>
-                                    <div className="w-16 h-16 bg-slate-400 bg-img rounded-full" style={{ backgroundImage: `url(${users[u].img})` }}></div>
-                                    <div className="flex flex-col">
-                                        <div className='flex space-x-1'>
-                                            <p className="font-bold text-lg">{users[u].name} {u === socketId ? '(you)' : ''}</p>
-                                            {users[u].owner === true ? 'crown' : null}
-                                        </div>
-                                        <p className="text-sm">score: {users[u].score}</p>
-                                        {!data.gameStarted ? <span className='text-xs opacity-0'>dd</span> :
-                                            <>
-                                                {users[u].playing === true ?
-                                                    <p className="text-xs bold">{data.reader === u ? 'reading now' : !data.readingTime && users[u].ready === true ? 'done' : 'thinking'}</p>
-                                                    :
-                                                    <p className="text-xs bold">starts in next round</p>
-                                                }
-                                            </>
-                                        }
-                                    </div>
-                                </li>
+
+                    {data.reading === true ? <>
+                        <ul>
+                            {data.cardsToRead.map((i, index) => (<li key={index}>
+                                <ul value={index} onClick={selectBest} className={`${styles.userSelectedCards} ${index === best ? 'selected' : null}`} >{i.map(j => (
+                                    <li key={j.id} className="card white">{j.text} {best}</li>
+                                ))}</ul>
+                            </li>
                             ))}
                         </ul>
-                        : <p>no users</p>}
-                </div>
-                {data.gameStarted === false ?
-                    <>
-                        <div className="absolute w-full h-full bg-indigo-300 opacity-50 top-0 left-0"></div>
-                        <div className="flex flex-col items-center space-y-2 absolute top-1/2 left-1/2 bg-slate-400 -translate-x-1/2 -translate-y-1/2 p-4 rounded-sm !z-1000">
-                            <p className="text-xl select-none">Waiting for game start</p>
-                            {users === null ? null :
-                                <>
-                                    {socketId in users && users[socketId].owner === true ? <button onClick={startGame} className="btn-primary">start game</button> : null}
-                                </>
-                            }
-                        </div>
-                    </>
-                    : null
-                }
-                {winner !== null ?
-                    <>
-                        <div className="absolute w-full h-full bg-indigo-700 top-0 left-0"></div>
-                        <div className="flex flex-col items-center space-y-2 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 rounded-sm !z-1000">
-                            <h1 className="text-3xl select-none text-slate-100">Game won by {winner}</h1>
-                            <Link to='/' className='underline text-slate-100'>go to home page</Link>
-                        </div>
-                    </>
-                    : null
-                } */}
-        </> : null
-        }
-        </>
+                        {best !== null && data.cardChar === userData.id ? <Button onClick={sendBest} text="confirm selection" /> : null}
+                    </> : <>
+
+                        {userData.ready === true ? <>
+                            <p>You selected your cards already, waiting for other players.</p>
+                            <ul>
+                                {userData.selected.map(i => (
+                                    <li className="card white" key={i.id}>{i.text}</li>
+                                ))}
+                            </ul>
+
+                        </> : <>
+                            {data.cardChar === userData.id ? null : <>
+                                {data.black.fields === whites.length ? <Button onClick={sendWhites} text="confirm selection" /> : <p>select {data.black.fields} card</p>}
+                            </>}
+
+                            {data.cardChar === userData.id ? null : <>
+                                {!userData.cards ? null :
+                                    <ul>
+                                        {userData.cards.map((card, index) => (
+                                            <li key={index} value={card.id} onClick={selectWhite} className={`card white ${whites.includes(card.id) ? 'selected' : null}`}>{card.id} {card.text}</li>
+                                        ))}
+                                    </ul>
+                                }
+                            </>}
+                        </>}
+                    </>}
+
+                </div>}
+            </div>
+        </> : <p>loading...</p>} </>
     )
 }

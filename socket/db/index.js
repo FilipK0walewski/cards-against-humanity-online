@@ -1,5 +1,8 @@
 const { Pool } = require('pg')
 
+// postgres://username:password@hostname:port/database
+// postgres://marcin:Calendar2023@localhost:5432/cah
+
 const connectionString = process.env.PSQL_CONN_STRING
 const pool = new Pool({ connectionString })
 
@@ -24,7 +27,7 @@ module.exports = {
         return data.rows[0]
     },
     getWhiteCards: async (deckId, n) => {
-        const data = await pool.query(`select text from cards where deck_id = $1 and color = $2 order by random() limit ${n}`, [deckId, 'white'])
+        const data = await pool.query(`select card_id id, text from cards where deck_id = $1 and color = $2 order by random() limit ${n}`, [deckId, 'white'])
         return data.rows
     }
 }

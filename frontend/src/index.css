@@ -64,6 +64,10 @@ button {
   color: var(--white-card-font);
 }
 
+.selected {
+  border: 2px solid var(--green-0)
+}
+
 .m-1 {
   margin: .5rem;
 }
@@ -76,4 +80,8 @@ button {
 
 .space-x > *+* {
   margin-left: .5rem;
+}
+
+.space-y > *+* {
+  margin-top: .5rem;
 }

@@ -134,6 +134,10 @@ io.on('connection', (socket) => {
         }
 
         const [winners, winScore] = await room.getWinners(selected)
+        for (let uId of winners) {
+            socket.emit('message', `${room.users[uId].name} scored ${winScore} point.`)
+        }
+
         if (room.maxUserScore >= room.maxScore) {
             const usersWithMaxScore = Object.keys(room.users).filter(uId => room.users[uId].score === room.maxUserScore)
             if (usersWithMaxScore.length === 1) {
@@ -143,7 +147,6 @@ io.on('connection', (socket) => {
             } 
         }
 
-        io.to(roomId).emit('roundWin', winners, winScore)
         for (let uId in room.users) {
             if (room.users[uId].selected !== null) {
                 const newWhites = await db.getWhiteCards(room.deckId, room.black.fields)

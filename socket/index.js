@@ -135,7 +135,7 @@ io.on('connection', (socket) => {
 
         const [winners, winScore] = await room.getWinners(selected)
         for (let uId of winners) {
-            socket.emit('message', `${room.users[uId].name} scored ${winScore} point.`)
+            io.to(roomId).emit('message', `${room.users[uId].name} scored ${winScore} point.`)
         }
 
         if (room.maxUserScore >= room.maxScore) {

@@ -1,8 +1,5 @@
 const { Pool } = require('pg')
 
-// postgres://username:password@hostname:port/database
-// postgres://marcin:Calendar2023@localhost:5432/cah
-
 const connectionString = process.env.PSQL_CONN_STRING
 const pool = new Pool({ connectionString })
 

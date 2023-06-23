@@ -7,7 +7,7 @@ services:
     environment:
       SECRET_KEY: your_secret
       PSQL_CONN_STRIN: postgresql://postgres_user:posgres_password@db/postgres_db
-    volues:
+    volumes:
       - ./statis:/static
   frontend:
     build: ./frontend

@@ -1,8 +1,7 @@
-# from asyncpg.exceptions import UniqueViolationError
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
-from libs.common import verify_token
+from libs.common import get_user, get_logged_in_user
 from libs.psql import db
 from models.cards import Card, NewCard
 
@@ -13,36 +12,36 @@ router = APIRouter(
 
 
 @router.post('/')
-async def create_card(card: NewCard, user_id = Depends(verify_token)):
-    r = await db.fetch_one('select user_id from decks where deck_id = :did', {'did': card.deck_id})
-    if r._mapping['user_id'] != user_id:
-        raise HTTPException(status_code=403)
+async def create_card(card: NewCard, user: dict = Depends(get_logged_in_user)):
+    deck = await db.fetch_one('select user_id from decks where id = :id', {'id': card.deck_id})
+    if deck._mapping['user_id'] != user['id']:
+        raise HTTPException(status_code=403, detail='Your are not ower of this deck.')
 
-    values = {'did': card.deck_id, 'c': card.color, 't': card.text, 'f': card.fields}
-    await db.execute('insert into cards(deck_id, color, text, fields) values(:did, :c, :t, :f)', values)
+    values = {'id': card.deck_id, 'color': card.color, 'text': card.text, 'fields': card.fields}
+    await db.execute('insert into cards(deck_id, color, text, fields) values(:id, :color, :text, :fields)', values)
     return {'message': 'Card created.'}
 
 
 @router.put('/{card_id}')
-async def update_card(card_id: int, data: Card, user_id: int = Depends(verify_token)):
-    deck = await db.fetch_one('select deck_id from cards where card_id = :id', {'id': card_id})
-    card = await db.fetch_one('select user_id from decks where deck_id = :id', {'id': deck._mapping['deck_id']})
-    if user_id != card._mapping['user_id']:
-        raise HTTPException(status_code=403)
+async def update_card(card_id: int, data: Card, user: dict = Depends(get_logged_in_user)):
+    card = await db.fetch_one('select deck_id from cards where id = :id', {'id': card_id})
+    deck = await db.fetch_one('select user_id from decks where id = :id', {'id': card._mapping['deck_id']})
+    if user['id'] != deck._mapping['user_id']:
+        raise HTTPException(status_code=403, detail='Your are not ower of this deck.')
 
-    values = {'c': data.color, 't': data.text, 'f': data.fields, 'id': card_id}
-    await db.execute('update cards set color = :c, text = :t, fields = :f where card_id = :id', values)
+    values = {'color': data.color, 'text': data.text, 'fields': data.fields, 'id': card_id}
+    await db.execute('update cards set color = :color, text = :text, fields = :fields where id = :id', values)
     return {'message': 'Card updated.'} 
 
 
 @router.delete('/{card_id}')
-async def delete_card(card_id: int, user_id: int = Depends(verify_token)):
-    deck = await db.fetch_one('select deck_id from cards where card_id = :id', {'id': card_id})
-    card = await db.fetch_one('select user_id from decks where deck_id = :id', {'id': deck._mapping['deck_id']})
-    if user_id != card._mapping['user_id']:
+async def delete_card(card_id: int, user: dict = Depends(get_logged_in_user)):
+    card = await db.fetch_one('select deck_id from cards where id = :id', {'id': card_id})
+    deck = await db.fetch_one('select user_id from decks where id = :id', {'id': card._mapping['deck_id']})
+    if user['id'] != deck._mapping['user_id']:
         raise HTTPException(status_code=403, detail='It\'s not your deck.')
 
-    await db.execute('delete from cards where card_id = :id', {'id': card_id})
+    await db.execute('delete from cards where id = :id', {'id': card_id})
     return {'card_id': card_id, 'message': 'Card deleted.'}
 
 
@@ -65,15 +64,19 @@ async def insert_cards(f, deck_id):
             if file_fields.isnumeric():
                 fields = int(file_fields)
 
-        insert_data.append({'did': deck_id, 'c': color, 't': text, 'f': fields})
+        insert_data.append({'id': deck_id, 'color': color, 'text': text, 'fields': fields})
     try:
-        await db.execute_many('insert into cards(deck_id, color, text, fields) values(:did, :c, :t, :f)', insert_data)
+        await db.execute_many('insert into cards(deck_id, color, text, fields) values(:id, :color, :text, :fields)', insert_data)
     except:
         print('fail')
 
 
 @router.post('/file-import')
-async def import_cards_from_file(deck_id: int, file: UploadFile, background_tasks: BackgroundTasks):
+async def import_cards_from_file(deck_id: int, file: UploadFile, background_tasks: BackgroundTasks, user: dict = Depends(get_logged_in_user)):
+    deck = await db.fetch_one('select user_id from decks where id = :id', {'id': deck_id})
+    if user['id'] != deck._mapping['user_id']:
+        raise HTTPException(status_code=403, detail='It\'s not your deck.')
+
     background_tasks.add_task(insert_cards, file, deck_id)
     return {'message': 'Cards will appear in nearest future.'}
 

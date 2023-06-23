@@ -18,3 +18,7 @@ class UserOut(BaseModel):
 
 class NewDescription(BaseModel):
     text: str
+
+
+class Username(BaseModel):
+    text: str

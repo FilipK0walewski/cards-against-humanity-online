@@ -65,11 +65,11 @@ button {
 }
 
 .selected {
-  border: 2px solid var(--green-0)
+  box-shadow: 0 5px 5px 5px var(--green-0);
 }
 
 .m-1 {
-  margin: .5rem;
+  margin: .5rem !important;
 }
 
 .bg-img {
@@ -83,5 +83,13 @@ button {
 }
 
 .space-y > *+* {
-  margin-top: .5rem;
+  margin-top: .5rem !important;
+}
+
+.px {
+  padding: 0 .5rem;
+}
+
+.p {
+  padding: .5rem;
 }

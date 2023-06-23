@@ -11,8 +11,8 @@ import { Profile } from './pages/Profile'
 import { Register } from './pages/Register'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
-import { useDispatch } from 'react-redux'
-import { setUsername } from './store/common'
+import { useDispatch, useSelector } from 'react-redux'
+import { setUserData } from './store/common'
 
 import { useEffect } from 'react'
 import instance from './services/Common'
@@ -20,12 +20,16 @@ import instance from './services/Common'
 export default function App() {
   const dispatch = useDispatch()
 
+  const loggedIn = useSelector((state) => state.common.loggedIn)
+
   useEffect(() => {
-    if (!instance.defaults.headers.common['token']) return
-    instance.get('/profile/username').then(res => {
-      dispatch(setUsername(res.data.username))
+    instance.get('/auth/check').then(res => {
+      dispatch(setUserData(res.data))
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token)
+      }
     })
-  }, [])
+  }, [loggedIn])
 
   return (
     <>

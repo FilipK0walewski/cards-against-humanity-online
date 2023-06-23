@@ -1,21 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import instance from "../services/Common";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from 'react-redux'
+
+import instance from "../services/Common";
+import styles from './decks.module.css'
 
 import { Button } from '../components/Button'
 import { Checkbox } from '../components/Checkbox'
 import { Input } from '../components/Input'
 import { Modal } from "../components/Modal";
 
-import styles from './decks.module.css'
-
 export function Decks() {
-    const loggedIn = useSelector(state => state.common.loggedIn)
     const navigate = useNavigate()
+    const loggedIn = useSelector(state => state.common.loggedIn)
+    const guest = useSelector(state => state.common.guest)
 
-    const [searchParams, setSearchParams] = useSearchParams()
+    const modalRef = useRef(null)
+    const [searchParams,] = useSearchParams()
     const [decks, setDecks] = useState([])
 
     const [clickedRow, setClickedRow] = useState()
@@ -26,8 +28,9 @@ export function Decks() {
     const createDeck = async (e) => {
         e.preventDefault()
         await instance.post('/decks', { name, public: isPublic })
-        const res = await instance.get('/decks', { params: { public: searchParams.get('public'), private: searchParams.get('private') } })
+        const res = await instance.get('/decks', { params: { private: searchParams.get('private') } })
         setDecks(res.data)
+        modalRef.current.closeModal()
     }
 
     useEffect(() => {
@@ -37,7 +40,7 @@ export function Decks() {
 
     useEffect(() => {
         async function getDecks() {
-            const res = await instance.get('/decks', { params: { public: searchParams.get('public'), private: searchParams.get('private') } })
+            const res = await instance.get('/decks', { params: { private: searchParams.get('private') } })
             setDecks(res.data)
         }
         getDecks()
@@ -47,18 +50,14 @@ export function Decks() {
         <>
             <div className={styles.container}>
                 <div className={styles.header}>
-                    <p>{
-                        searchParams.get('public') === 'true' && searchParams.get('private') === 'true' && loggedIn ? 'Available' :
-                            searchParams.get('private') === 'true' && loggedIn ? 'Your' : searchParams.get('public') === 'false' ? 'No' : 'Public'
-                    } decks</p>
-                    {loggedIn ?
-                        <Modal text="create deck"  >
+                    <p>{searchParams.get('private') === 'true' ? 'Your' : 'Public'} decks</p>
+                    {loggedIn && guest === false ?
+                        <Modal ref={modalRef} text="create deck" >
                             <form onSubmit={createDeck} className={styles.form}>
                                 <Input value={name || ''} label="deck name" onChange={e => setName(e.target.value)} />
                                 <Checkbox label="public deck" value={isPublic} onChange={() => { setIsPublic(e => !e) }} />
                                 <Button text="create deck" />
                             </form>
-
                         </Modal>
                         : null}
                 </div>

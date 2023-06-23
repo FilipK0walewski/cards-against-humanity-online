@@ -22,6 +22,14 @@ export const Game = () => {
     const [whites, setWhites] = useState([])
     const [best, setBest] = useState(null)
 
+    const goToGameCreate = () => {
+        navigate('/games/create')
+    }
+
+    const copyInviteUrl = () => {
+        navigator.clipboard.writeText(document.URL);
+    }
+
     const startGame = () => {
         socket.emit('start')
     }
@@ -43,16 +51,14 @@ export const Game = () => {
     const selectWhite = (e) => {
         setWhites(arr => {
             const tmp = [...arr, e.target.value]
-            console.log(tmp.length, data.black.fields)
             if (tmp.length > data.black.fields) tmp.shift()
-            console.log(tmp.length, data.black.fields)
             return tmp
         })
     }
 
-    const selectBest = (e) => {
+    const selectBest = (index) => {
         if (data.cardChar !== userData.id) return
-        setBest(e.target.value)
+        setBest(index)
     }
 
     useEffect(() => {
@@ -64,8 +70,7 @@ export const Game = () => {
             return
         }
 
-        // socket = io(process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:3000' : undefined, { auth: { token }, query: { id } });
-        socket = io('http://127.0.0.1:3000', { auth: { token }, query: { id } });
+        socket = io(process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:3000' : undefined, { auth: { token }, query: { id } });
 
         socket.on('connect', () => {
             setSocketId(socket.id)
@@ -82,18 +87,16 @@ export const Game = () => {
         });
 
         socket.on('userData', (uData) => {
-            console.log('userData', uData)
             setUserData(uData)
+            setWhites([])
+            setBest(null)
         })
 
         socket.on('message', (text) => {
-            console.log('message', text)
             dispatch(addNotification({ text, type: 0 }))
         })
 
         socket.on('data', (data) => {
-            console.log('data')
-            console.log(data)
             if (process.env.NODE_ENV === 'development') {
                 for (let u in data.users) {
                     data.users[u].img = 'http://127.0.0.1:8000' + data.users[u].img
@@ -103,84 +106,113 @@ export const Game = () => {
         })
 
         socket.on('error', message => {
-            console.log('error:', message)
+            dispatch(addNotification({ message, type: 1 }))
+        })
+
+        return (() => {
+            socket.close()
         })
 
     }, []);
 
     return (
         <> {data && userData ? <>
-            <div className={`space-y ${styles.container}`}>
-                <div className={styles.gameInfo}>
-                    <p className={styles.gameName}>{data.name}</p>
-                    <p>{data.status}</p>
-                    <div className="space-x">
-                        <Button text="copy invite url" />
-                        {data.started !== true && userData.id === data.owner ? <Button text="start game" onClick={startGame} /> : null}
-                    </div>
-                </div>
+            {data.ended === true ? <div className={`space-y ${styles.endGame}`}>
+                <p>{data.status}</p>
+                {data.owner === userData.id ? <Button onClick={startGame} text="restart game" /> : <span>only owner of game can do restart</span>}
+                <Button onClick={goToGameCreate} text="create new game" />
+            </div> :
+                <div className={`space-y ${styles.container}`}>
+                    <div className={`space-y ${styles.gameInfo}`}>
+                        <p className={styles.gameName}>{data.name}</p>
+                        <p>{data.status}</p>
+                        <div className="space-x">
+                            <Button onClick={copyInviteUrl} text="copy invite url" />
+                            {data.started !== true && userData.id == data.owner ? <Button text="start game" onClick={startGame} /> : null}
+                        </div>
 
-
-                <ul className={styles.usersList}>
-                    {Object.keys(data.users).map(u => (
-                        <li key={u} className={`${styles.userContainer} ${data.users[u].online === true ? null : styles.offline}`}>
-                            <div className={styles.imageContainer}>
-                                <img className={styles.image} src={data.users[u].img} alt={data.users[u].name} />
-                            </div>
-                            <div className={styles.userText}>
-                                <p className={u == userData.id ? styles.you : null}>{data.users[u].name}</p>
-                                <p className={styles.score}>{u == data.cardChar ? 'char' : data.users[u].ready === false ? 'thinking' : null}</p>
-                                <p className={styles.score}>score: {data.users[u].score}</p>
-                            </div>
-                            {userData.id == data.owner ? <button onClick={() => kick(u)}>kick</button> : null}
-                        </li>
-                    ))}
-                </ul>
-
-                {!data.started ? null : <div className={`space-y ${styles.cardsContainer}`}>
-                    <div className="card black">
-                        {data.black.text}
-                    </div>
-
-                    {data.reading === true ? <>
-                        <ul>
-                            {data.cardsToRead.map((i, index) => (<li key={index}>
-                                <ul value={index} onClick={selectBest} className={`${styles.userSelectedCards} ${index === best ? 'selected' : null}`} >{i.map(j => (
-                                    <li key={j.id} className="card white">{j.text} {best}</li>
-                                ))}</ul>
-                            </li>
+                        <ul className={`space-y ${styles.usersList}`}>
+                            {Object.keys(data.users).map(u => (
+                                <li key={u} className={`${styles.userContainer} ${data.users[u].online === true ? null : styles.offline}`}>
+                                    <div className={styles.imageContainer}>
+                                        <img className={styles.image} src={data.users[u].img} alt={data.users[u].name} />
+                                    </div>
+                                    <div className={styles.userText}>
+                                        <p className={u == userData.id ? styles.you : null}>{data.users[u].name}</p>
+                                        <p className={styles.score}>{u == data.cardChar ? 'char' : data.users[u].selected === null ? 'thinking' : null}</p>
+                                        <p className={styles.score}>score: {data.users[u].score}</p>
+                                    </div>
+                                    {userData.id == data.owner && userData.id != u ? <button className={styles.kickButton} onClick={() => kick(u)}>kick</button> : null}
+                                </li>
                             ))}
                         </ul>
-                        {best !== null && data.cardChar === userData.id ? <Button onClick={sendBest} text="confirm selection" /> : null}
-                    </> : <>
 
-                        {userData.ready === true ? <>
-                            <p>You selected your cards already, waiting for other players.</p>
-                            <ul>
-                                {userData.selected.map(i => (
-                                    <li className="card white" key={i.id}>{i.text}</li>
-                                ))}
-                            </ul>
+                        {data.started ? <div className={`space-y ${styles.blackCardContainer}`}>
+                            <div className="card black">
+                                {data.black.text}
+                            </div>
 
-                        </> : <>
-                            {data.cardChar === userData.id ? null : <>
-                                {data.black.fields === whites.length ? <Button onClick={sendWhites} text="confirm selection" /> : <p>select {data.black.fields} card</p>}
-                            </>}
-
-                            {data.cardChar === userData.id ? null : <>
-                                {!userData.cards ? null :
-                                    <ul>
-                                        {userData.cards.map((card, index) => (
-                                            <li key={index} value={card.id} onClick={selectWhite} className={`card white ${whites.includes(card.id) ? 'selected' : null}`}>{card.id} {card.text}</li>
-                                        ))}
-                                    </ul>
+                            {data.reading === true ? <>
+                                {data.cardChar == userData.id ? <>
+                                    <p>Read cards and select</p>
+                                    {best !== null && data.cardChar === userData.id ? <Button onClick={sendBest} text="confirm selection" /> : null}
+                                </> : <p>{data.users[data.cardChar].name} is reading</p>}
+                            </> : data.cardChar == userData.id ? <>
+                                <p>wait for users to choose their cards.</p>
+                            </> : userData.selected !== null ? <>
+                            </> : userData.selected === null ? <>
+                                {userData.cards.length === 0 ? <>
+                                    <p>You join in middle of the round, wait to round end.</p>
+                                </> : data.black.fields === whites.length ?
+                                    <Button onClick={sendWhites} text="confirm selection" />
+                                    :
+                                    <p>select {data.black.fields} card{data.black.fields > 1 ? 's' : null}</p>
                                 }
+                            </> : null}
+
+                        </div> : null}
+
+                    </div>
+
+
+                    {!data.started ? null : <div className={`space-y ${styles.cardsContainer}`}>
+                        {data.reading === true ? <ul className={`${styles.userCards} space-x`}>
+                            {data.cardsToRead.map((i, index) => (<li key={index}>
+                                {i === null ? null :
+                                    <ul onClick={() => selectBest(index)} className={`${styles.userSelectedCards} ${index === best ? 'selected' : null}`} >{i.map(j => (
+                                        <li key={j.id} className="card white">{j.text}</li>
+                                    ))}</ul>}
+                            </li>
+                            ))}
+                        </ul> : <>
+
+                            {userData.selected !== null ? <>
+                                <ul className={styles.availableCards}>
+                                    {userData.selected.map(i => (
+                                        <li className="card white" key={i.id}>{i.text}</li>
+                                    ))}
+                                </ul>
+
+                            </> : <>
+                                {data.cardChar === userData.id ? null : <>
+                                    {!userData.cards ? null :
+                                        <ul className={`${styles.availableCards}`}>
+                                            {userData.cards.map((card, index) => (
+                                                <li key={index} value={card.id} onClick={selectWhite} className={`m-1 card white ${whites.includes(card.id) ? 'selected' : null}`}>
+                                                    {card.text}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    }
+                                </>}
+
+                                {data.cardChar === userData.id ? null : <>
+                                </>}
                             </>}
                         </>}
-                    </>}
 
+                    </div>}
                 </div>}
-            </div>
         </> : <p>loading...</p>} </>
     )
 }

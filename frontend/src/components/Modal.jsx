@@ -1,9 +1,10 @@
 import styles from './modal.module.css'
 
+import React from 'react'
 import { Button } from './Button'
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 
-export const Modal = ({ text, children, opened, closeModal }) => {
+export const Modal = React.forwardRef(({ text, children, onClose }, ref) => {
 
     const dialogRef = useRef(null)
 
@@ -11,25 +12,28 @@ export const Modal = ({ text, children, opened, closeModal }) => {
         dialogRef.current.showModal()
     }
 
-    const close = () => {
-        closeModal()
+    const closeModal = () => {
+        if (onClose) onClose()
         dialogRef.current.close()
     }
 
-    useEffect(() => {
-        if (opened === true) dialogRef.current.showModal()
-        else if (opened === false) dialogRef.current.close()
-    }, [opened])
+    const openModal = () => {
+        dialogRef.current.showModal()
+    }
+
+    React.useImperativeHandle(ref, () => ({
+        closeModal, openModal
+    }));
 
     return (
         <>
-            {opened === undefined ? <Button text={text} onClick={showModal} /> : null}
+            {text ? <Button text={text} onClick={showModal} /> : null}
             <dialog ref={dialogRef} className={styles.dialog}>
                 <div className={styles.btnContainer}>
-                    <Button text="close" onClick={close} />
+                    <Button text="close" onClick={closeModal} />
                 </div>
                 {children}
             </dialog>
         </>
     )
-}
+})

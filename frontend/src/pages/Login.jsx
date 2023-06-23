@@ -15,6 +15,7 @@ import { logIn } from '../store/common'
 export const Login = () => {
     const dispatch = useDispatch()
     const loggedIn = useSelector((state) => state.common.loggedIn)
+    const guest = useSelector((state) => state.common.guest)
 
     const navigate = useNavigate()
 
@@ -30,7 +31,7 @@ export const Login = () => {
     }
 
     useEffect(() => {
-        if (loggedIn) navigate('/')
+        if (loggedIn && guest == false) navigate('/')
     })
 
     return (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import instance from "../services/Common";
 
@@ -14,12 +14,13 @@ import styles from './deck.module.css'
 export function Deck() {
     const navigate = useNavigate()
     const loggedIn = useSelector(state => state.common.loggedIn)
+    const guest = useSelector(state => state.common.guest)
     const username = useSelector(state => state.common.username)
 
     const { id } = useParams()
-    const [deck, setDeck] = useState()
 
-    const [cardEdit, setCardEdit] = useState(false)
+    const modalRef = useRef()
+    const [deck, setDeck] = useState()
     const [cardIndex, setCardIndex] = useState()
     const [card, setCard] = useState({})
 
@@ -48,14 +49,14 @@ export function Deck() {
     }
 
     const updateCard = () => {
-        instance.put(`/cards/${card.card_id}`, { text: card.text, color: card.color, fields: card.fields || null }).then(() => {
+        instance.put(`/cards/${card.id}`, { text: card.text, color: card.color, fields: card.fields || null }).then(() => {
             setCardIndex(null)
             getDeck()
         })
     }
 
     const deleteCard = () => {
-        instance.delete(`/cards/${deck.cards[cardIndex].card_id}`).then(() => {
+        instance.delete(`/cards/${deck.cards[cardIndex].id}`).then(() => {
             setCardIndex(null)
             getDeck()
         })
@@ -87,6 +88,19 @@ export function Deck() {
             const link = document.createElement('a')
             link.href = href
             link.setAttribute('download', 'example.csv')
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(href)
+        })
+    }
+
+    const downloadDeckToFile = () => {
+        instance.get(`/decks/${id}/download`, { responseType: 'blob' }).then(res => {
+            const href = URL.createObjectURL(res.data)
+            const link = document.createElement('a')
+            link.href = href
+            link.setAttribute('download', `${deck.name}.txt`)
             document.body.appendChild(link)
             link.click()
             document.body.removeChild(link)
@@ -128,18 +142,20 @@ export function Deck() {
 
     useEffect(() => {
         if (cardIndex === null || cardIndex === undefined) {
-            setCardEdit(false)
+            if (modalRef.current) {
+                modalRef.current.closeModal()
+            }
             return
         }
 
-        setCardEdit(true)
+        modalRef.current.openModal()
         if (cardIndex === -1) {
             setCard({})
             return
         }
 
         const tmpCard = deck.cards[cardIndex]
-        setCard({ text: tmpCard.text, color: tmpCard.color, card_id: tmpCard.card_id, fields: tmpCard.fields })
+        setCard({ text: tmpCard.text, color: tmpCard.color, id: tmpCard.id, fields: tmpCard.fields })
     }, [cardIndex])
 
     useEffect(() => {
@@ -153,7 +169,7 @@ export function Deck() {
 
     return (
         <> {deck ? <div className={styles.container}>
-            <Modal opened={cardEdit} closeModal={() => { setCardEdit(false); setCardIndex(null) }}>
+            <Modal ref={modalRef} onClose={() => { setCardIndex(null) }}>
                 <form className={styles.formContainer} onSubmit={handleCreateUpdate}>
                     <Input id="text" label="card text" value={card.text || ''} onChange={handleCard} />
                     <Select id="color" label="color" value={card.color || ''} onChange={handleCard}>
@@ -171,7 +187,7 @@ export function Deck() {
 
             <p className={styles.deckName}>Deck {deck.name}</p>
             <p>This deck {deck.size === 0 ? 'is empty' : `has ${deck.size} cards`}.</p>
-            {deck.cards && loggedIn === true && deck.owner === username ? <>
+            {deck.cards && loggedIn === true && guest === false && deck.owner === username ? <>
                 <p>You can add new cards by clicking "add card" button.
                     If you want to add more than one card you have to import text file with cards data.
                     Click "upload cards file" to upload file.
@@ -185,6 +201,8 @@ export function Deck() {
                     <Button text="remove deck" onClick={deleteDeck} />
                 </div>
             </> : null}
+            <Button text="download deck to file" onClick={downloadDeckToFile} />
+
 
             {!deck.cards || deck.cards.length === 0 ? null : <>
                 <hr />
@@ -198,7 +216,7 @@ export function Deck() {
                 </div>
                 <ul className={styles.cardsList}>
                     {deck.cards.map((card, index) => (
-                        <li id={card.card_id} key={`c-${index}`} className={`m-1 card ${card.color === 'black' ? 'black' : 'white'}`} onClick={() => { loggedIn === true && deck.owner === username ? setCardIndex(index) : null }}>
+                        <li id={card.id} key={`c-${index}`} className={`m-1 card ${card.color === 'black' ? 'black' : 'white'}`} onClick={() => { loggedIn === true && deck.owner === username ? setCardIndex(index) : null }}>
                             {card.text}
                         </li>
                     ))}

@@ -9,6 +9,7 @@ import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 
 export const Lobby = () => {
+    const guest = useSelector(state => state.common.guest)
     const username = useSelector(state => state.common.username)
     const loggedIn = useSelector(state => state.common.loggedIn)
 
@@ -34,6 +35,10 @@ export const Lobby = () => {
     }
 
     useEffect(() => {
+        setGameUsername(username)
+    }, [username])
+
+    useEffect(() => {
         const token = localStorage.getItem(id)
         if (token) {
             navigate(`/games/${id}`)
@@ -41,11 +46,11 @@ export const Lobby = () => {
         getGame()
     }, [])
 
-    return <>
-        {game ? <div className={styles.container}>
+    return <div className={styles.container}>
+        {game ? <>
             <p style={{ fontWeight: 'bold' }}>{game.name}</p>
             <form onSubmit={joinGame} className={styles.joinForm}>
-                {loggedIn === false ? <>
+                {loggedIn === true && guest === true ? <>
                     <p>You are not logged in.</p>
                     <Input label="in game name" value={gameUsername || ''} onChange={(e) => setGameUsername(e.target.value)} />
                 </> : null}
@@ -55,6 +60,6 @@ export const Lobby = () => {
                 </> : null}
                 <Button text="join game"></Button>
             </form>
-        </div> : <p>loading...</p>}
-    </>
+        </> : <p>loading...</p>}
+    </div>
 }

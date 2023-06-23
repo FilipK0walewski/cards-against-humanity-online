@@ -1,4 +1,4 @@
-import { Link, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useEffect } from "react";
 import instance from "../services/Common";
 
@@ -23,7 +23,7 @@ export const Common = () => {
             <Outlet />
             <div className={styles.notifications}>
                 {notifications.slice(0).reverse().map((i, index) => (
-                    <div key={index} style={{ backgroundColor: i.type === 0 ? 'blue' : 'red' }} className={`${styles.notification}`}>
+                    <div key={index} style={{ backgroundColor: i.type === 0 ? 'var(--green-0)' : 'var(--red-0)' }} className={`${styles.notification}`}>
                         {i.text}
                     </div>
                 ))}

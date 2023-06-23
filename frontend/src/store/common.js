@@ -6,25 +6,36 @@ export const commonSlice = createSlice({
   initialState: {
     loggedIn: localStorage.getItem('token') ? true : false,
     username: null,
+    guest: null,
     notifications: [],
   },
   reducers: {
     logIn: (state, data) => {
-      instance.defaults.headers.common['token'] = data.payload.token
       localStorage.setItem('token', data.payload.token)
+      for (let key of Object.keys(localStorage)) {
+        if (key !== 'token') {
+          localStorage.removeItem(key)
+        }
+      }
       state.loggedIn = true
       state.username = data.payload.username
+      state.guest = false
       state.notifications.push({ text: `Logged in as ${data.payload.username}.`, type: 0 })
     },
+    setUserData: (state, data) => {
+      state.loggedIn = true
+      state.guest = data.payload.guest
+      state.username = data.payload.username
+    },
+    setUsername: (state, data) => {
+      state.username = data.payload.username
+    },
     logOut: (state) => {
-      delete instance.defaults.headers.common['token']
       localStorage.removeItem('token')
       state.loggedIn = false
       state.username = null
+      state.guest = null
       state.notifications.push({ text: 'Logged out.', type: 0 })
-    },
-    setUsername: (state, username) => {
-      state.username = username.payload
     },
     addNotification: (state, data) => {
       state.notifications.push({ text: data.payload.text, type: data.payload.type })
@@ -35,5 +46,5 @@ export const commonSlice = createSlice({
   },
 })
 
-export const { logIn, logOut, setUsername, addNotification, removeNotification } = commonSlice.actions
+export const { logIn, logOut, setUserData, setUsername, addNotification, removeNotification } = commonSlice.actions
 export default commonSlice.reducer

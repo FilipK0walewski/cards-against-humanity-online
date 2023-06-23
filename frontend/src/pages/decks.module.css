@@ -2,6 +2,7 @@
     max-width: 1024px;
     margin-left: auto;
     margin-right: auto;
+    padding: 0 1rem;
 }
 
 .header {
@@ -23,10 +24,6 @@
     width: 100%;
     border-collapse: collapse;
 }
-
-/* .table tbody tr:nth-child(even) {
-    background-color: var(--bg-3);
-} */
 
 .th,
 .td {

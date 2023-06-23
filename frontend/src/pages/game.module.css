@@ -1,49 +1,23 @@
 .container {
-    margin: 2rem;
     padding: .5rem;
     box-sizing: border-box;
-    /* background-color: var(--bg-1); */
     position: relative;
-    height: calc(100% - 80px);
-}
-
-.gameName {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--font-1);
-}
-
-.imageContainer {
-    max-width: 50px;
-    max-height: 50px;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    border-radius: 50%;
-    position: relative;
-}
-
-.image {
-    width: 100%;
-    height: auto;
-    border-radius: 50%;
+    height: calc(100%);
 }
 
 .usersList {
     position: absolute;
-    right: 0;
-    top: .5rem;
-}
-
-.usersList > *+* {
-    margin-top: .5rem;
+    right: .5rem;
+    top: 0;
 }
 
 .userContainer {
     display: flex;
-    width: 200px;
+    min-width: 200px;
+    background-color: var(--bg-1);
+    position: relative;
+    padding: .5rem;
+    box-sizing: border-box;
 }
 
 .userContainer > *+* {
@@ -65,28 +39,97 @@
     background-color: red;
 }
 
-/* .gameInfo {
-    background-color: rebeccapurple;
-} */
-
-.gameInfo > *+* {
-    margin-top: .5rem;
+.gameInfo {
+    position: relative;
+    height: 50%;
 }
 
 .cardsContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
+    height: 50%;
+    overflow-y: auto;
 }
 
 .userSelectedCards {
     display: flex;
     padding: .5rem;
     box-sizing: border-box;
-    background-color: rebeccapurple;
     width: min-content;
 }
 
 .you {
     color: var(--green-0);
+}
+
+.userCards {
+    display: flex;
+}
+
+.availableCards {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.gameName {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--font-1);
+}
+
+.imageContainer {
+    max-width: 50px;
+    max-height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    position: relative;
+}
+
+.image {
+    width: 100%;
+    height: auto;
+    border-radius: 50%;
+}
+
+.kickButton {
+    font-size: smaller;
+    border: none;
+    background-color: inherit;
+    text-decoration: underline;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    cursor: pointer;
+    color: var(--font-1);
+}
+
+.kickButton:hover {
+    color: var(--red-0);
+}
+
+.blackCardContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* justify-content: center; */
+}
+
+.endGame {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.endGame p {
+    font-size: xx-large;
 }

@@ -1,4 +1,4 @@
-# Cards against sanity
+# Cards against online
 
 Game based on [cards against humanity](https://www.cardsagainsthumanity.com)
 

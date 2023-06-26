@@ -9,7 +9,7 @@ export const Home = () => {
     return (
         <>
             <div className={styles.container}>
-                <h1>Cards against online</h1>
+                <h1>Cards against sanity online</h1>
                 <nav>
                     <ul className={styles.list}>
                         <li>

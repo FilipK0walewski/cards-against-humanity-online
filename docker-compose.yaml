@@ -3,11 +3,11 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - 9000:80
+      - 8080:80
   api:
     build: ./api
     ports:
-      - 9001:8000
+      - 8000:8000
     depends_on:
       - db
     environment:
@@ -18,7 +18,7 @@ services:
   socket:
     build: ./socket
     ports:
-      - 9002:3000
+      - 3000:3000
     depends_on:
       - db
     environment:

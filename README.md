@@ -7,8 +7,8 @@ Game based on [cards against humanity](https://www.cardsagainsthumanity.com)
 ### Using docker
 
 ```
-git clone https://github.com/FilipK0walewski/cards-against-sanity-online
-cd cards-against-sanity-online
+git clone https://github.com/FilipK0walewski/cards-against-online
+cd cards-against-online
 ```
 
 change SECRET_KEY in docoker-compose.yaml

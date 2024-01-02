@@ -1,4 +1,4 @@
-FROM node:18-alpine AS react
+FROM node:alpine AS react
 WORKDIR /app
 COPY . .
 RUN npm install

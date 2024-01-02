@@ -6,9 +6,10 @@ const notification = (text, n) => {
     store.dispatch(addNotification({ text, type: n }))
 }
 
-const token = localStorage.getItem('token')
-const instance = axios.create({ baseURL: import.meta.env.MODE === 'development' ? 'http://127.0.0.1:8000/api' : '/api' })
+const baseURL = import.meta.env.VITE_API_URL
+const instance = axios.create({ baseURL })
 
+const token = localStorage.getItem('token')
 if (token) instance.defaults.headers.common['token'] = token
 
 instance.interceptors.request.use((config) => {

@@ -29,14 +29,14 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-app.include_router(auth.router, prefix='/api/auth')
-app.include_router(cards.router, prefix='/api/cards')
-app.include_router(decks.router, prefix='/api/decks')
-app.include_router(games.router, prefix='/api/games')
-app.include_router(profile.router, prefix='/api/profile')
+app.include_router(auth.router, prefix='/auth')
+app.include_router(cards.router, prefix='/cards')
+app.include_router(decks.router, prefix='/decks')
+app.include_router(games.router, prefix='/games')
+app.include_router(profile.router, prefix='/profile')
 
 
-@app.get('/api/static/{encoded_path}')
+@app.get('/static/{encoded_path}')
 async def get_file(encoded_path: str):
     file_path = decode_file_path(encoded_path)
     if os.path.exists(file_path) is False:
